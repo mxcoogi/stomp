@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <title>STOMP WebSocket 테스트</title>
+</head>
+<body>
+<h2>STOMP WebSocket 테스트</h2>
+
+<div>
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+</div>
+
+<div>
+    <input type="text" id="messageInput" placeholder="보낼 메시지 입력" />
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<div>
+    <h4>서버로부터 받은 메시지</h4>
+    <pre id="messages"></pre>
+</div>
+
+<!-- SockJS & STOMP.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<script>
+    let stompClient = null;
+
+    function connect() {
+    const socket = new SockJS("http://localhost:8080/ws"); // Spring Boot에 맞게 수정
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function (frame) {
+    console.log('Connected: ' + frame);
+    stompClient.subscribe("/topic/notification", function (message) {
+    showMessage(message.body);
+});
+    showMessage("🔗 연결되었습니다.");
+});
+}
+
+    function disconnect() {
+    if (stompClient !== null) {
+    stompClient.disconnect();
+}
+    showMessage("❌ 연결 해제됨.");
+}
+
+    function sendMessage() {
+    const msg = document.getElementById("messageInput").value;
+    stompClient.send("/app/hello", {}, JSON.stringify({ message: msg }));
+}
+
+    function showMessage(message) {
+    const messagesEl = document.getElementById("messages");
+    messagesEl.textContent += message + "\n";
+}
+</script>
+</body>
+</html>
